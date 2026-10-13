@@ -1,0 +1,10 @@
+# never commit firmware or extracted device binaries (Amazon property)
+*.bin
+*.img
+*.dat
+*.apk
+*.so
+rootfs/
+targets/
+fw/
+extract/
