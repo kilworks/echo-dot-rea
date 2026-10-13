@@ -37,6 +37,12 @@ Other device binaries of interest, extracted and ready for the same workflow: `a
 
 See [`docs/findings.md`](docs/findings.md) for the full REA evidence.
 
+## Full decompilation
+
+Every Echo-specific binary is decompiled to C pseudocode: 12 binaries, 10,494 functions, 100%. Output in [`decomp/`](decomp), method and recovered architecture in [`docs/decompilation.md`](docs/decompilation.md).
+
+The stack: `alexad`/`libalexad.so` own the cloud connection and auth; `libalexaservice.so`/`libalexamessageparsingutil.so` carry the on-device message bus over LIPC (Lab126 IPC) with shared-memory attachment queues; `libalexaspeechplayerimpl.so` drives speech synthesis and audio; `amzn_dha_*` provision device attestation (HMAC over the serial via Amazon Keymaster).
+
 ## Legal
 
 For personal security research on hardware I own. Firmware images and extracted binaries are Amazon's property and are not redistributed here: this repo holds only the tooling, the method, and derived analysis. Obtain the OTA from Amazon's CDN yourself.
