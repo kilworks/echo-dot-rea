@@ -39,9 +39,24 @@ See [`docs/findings.md`](docs/findings.md) for the full REA evidence.
 
 ## Full decompilation
 
-Every Echo-specific binary is decompiled to C pseudocode: 12 binaries, 10,494 functions, 100%. Output in [`decomp/`](decomp), method and recovered architecture in [`docs/decompilation.md`](docs/decompilation.md).
+Every Echo-specific binary is decompiled to C pseudocode: 12 Fire OS binaries, 10,494 functions, 100%. The boot chain (`preloader`, `lk`, `tz`) is also loaded, but as raw MediaTek images it yields disassembly rather than pseudocode. Output in [`decomp/`](decomp), method and recovered architecture in [`docs/decompilation.md`](docs/decompilation.md).
 
 The stack: `alexad`/`libalexad.so` own the cloud connection and auth; `libalexaservice.so`/`libalexamessageparsingutil.so` carry the on-device message bus over LIPC (Lab126 IPC) with shared-memory attachment queues; `libalexaspeechplayerimpl.so` drives speech synthesis and audio; `amzn_dha_*` provision device attestation (HMAC over the serial via Amazon Keymaster).
+
+## Subsystem analysis
+
+Each subsystem analyzed from the pseudocode and the binaries' string tables:
+
+| Doc | Covers |
+|---|---|
+| [docs/avs-protocol.md](docs/avs-protocol.md) | `libalexad.so`: the cloud transport. SPDY (spdylay), config-driven endpoint, the libauth+idme+cJSON auth handshake, Doppler ping keepalive, the GTFO reconnect supervisor, the on-device command set. |
+| [docs/messaging-lipc.md](docs/messaging-lipc.md) | `libalexaservice.so` + `libalexamessageparsingutil.so`: the on-device message bus. JSON message model, LIPC hasharray transport with acks, shared-memory attachment queues, metadata parsing. |
+| [docs/speech-audio.md](docs/speech-audio.md) | `alexaspeechplayer` + impl: TTS/audio over GStreamer, the Conductor handler framework, ASR uplink, Bluetooth/power arbitration, UPL and stutter metrics. |
+| [docs/metrics-and-support.md](docs/metrics-and-support.md) | `metrics-collector` event-pair timing engine, `liblab126utils.so` (singleton, hashing, version), the `llog` logging stack. |
+| [docs/attestation.md](docs/attestation.md) | `amzn_dha_tool` + `amzn_dha_hmac`: RSA keypair + HMAC device attestation through the Keymaster HAL. |
+| [docs/bootchain.md](docs/bootchain.md) | `preloader` to `lk` to TEE to kernel: MediaTek secure boot, RSA-2048/PSS LK verification, Lab126 X.509 cert chain, idme unlock, A/B slots. |
+
+Internal codename for the whole Alexa stack is **Doppler** (`com.amazon.dee.doppler`, source path `vendor/amazon/doppler/projd/bin/alexad/src/AlexaDaemon.cpp`).
 
 ## Legal
 

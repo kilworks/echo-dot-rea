@@ -23,9 +23,24 @@ Pseudocode output lives in [`decomp/`](../decomp), one `.c` per binary.
 | `amzn_dha_hmac` | ARM64 | 24 | `decomp/amzn_dha_hmac.c` |
 | `libllog-android.so` | ARM32 | 17 | `decomp/libllog-android.so.c` |
 
+Boot chain, loaded as raw MediaTek images (not ELF), so Ghidra recovered
+disassembly/thunks rather than pseudocode. Documented from image strings in
+[bootchain.md](bootchain.md).
+
+| Image | Arch | Recovered | Output |
+|---|---|--:|---|
+| `preloader` | ARM32 | raw blob, thunks only | `decomp/preloader.c` |
+| `lk` | ARM32 | raw blob, thunks only | `decomp/lk.c` |
+| `tz` | ARM | 0 functions (opaque TEE) | `decomp/tz.c` |
+
 Function names are `FUN_<addr>` where the binary is stripped; the logic, control flow, string references and library calls are recovered. Named symbols survive only for exported/imported functions.
 
 ## Architecture recovered from the pseudocode and strings
+
+Each subsystem below has a dedicated deep-dive: [avs-protocol.md](avs-protocol.md),
+[messaging-lipc.md](messaging-lipc.md), [speech-audio.md](speech-audio.md),
+[metrics-and-support.md](metrics-and-support.md), [attestation.md](attestation.md),
+[bootchain.md](bootchain.md).
 
 ### The daemon: `alexad` + `libalexad.so`
 

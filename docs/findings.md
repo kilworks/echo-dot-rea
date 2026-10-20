@@ -73,4 +73,9 @@ libc.so  libm.so
 | `amzn_dha_hmac` | ARM64 | device-health HMAC crypto |
 | `metrics-collector` | ARM 32 | metrics daemon |
 
-Next step for any of these: `rea inspect <path>` then `rea function <path> <address>` for per-function pseudocode. `libalexad.so` (from `/system/lib`) holds the real AVS protocol logic and is the natural follow-up.
+Next step for any of these: `rea inspect <path>` then `rea function <path> <address>` for per-function pseudocode.
+
+The `libalexad.so` transport/protocol layer is now analyzed in
+[avs-protocol.md](avs-protocol.md): SPDY (spdylay) transport, config-driven
+endpoint, the `libauth`+idme+cJSON authentication handshake, Doppler ping
+keepalive, the GTFO reconnect supervisor, and the on-device Doppler command set.
