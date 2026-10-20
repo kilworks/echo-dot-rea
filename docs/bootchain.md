@@ -29,21 +29,30 @@ offset `0x300`) loads at `0x00200000`.
 `TEE` partition at `0xb600` (0x275800 bytes). After its MTK header, each sub-image
 is an `EET KTM ` container: a ~0x240-byte plaintext header (magic + body sizes
 `0xb1c0` / `0x2755c0`) followed by an **encrypted** body. The encryption is
-established three independent ways, not assumed:
+established by measurement, not assumed. The payload starts at file offset
+`0x440` (the EET KTM header's own content-offset field is `0x240`, after the
+`0x200` MTK header), so the carving is header-aware:
 
-- **Entropy**: the payload runs at 7.9-8.0 bits/byte end to end (2 KB windows),
-  the signature of ciphertext or compressed data, where ARM/AArch64 code sits
-  around 5-6.
-- **Byte histogram** of the ATF body: flat (`0x00` aside, every value occurs
-  ~200-210 times over 45 KB), i.e. no opcode skew.
-- **Ghidra**: imported as `AARCH64:LE:64:v8A` (BinaryLoader), both the carved ATF
-  payload and the full `tz.code.bin` analyze to **0 functions** - no valid control
-  flow exists to recover.
+- **Entropy**: 7.9-8.0 bits/byte end to end (2 KB windows), the signature of
+  ciphertext or compressed data, where ARM/AArch64 code sits around 5-6.
+- **Byte histogram / chi-square**: the ATF body's histogram is flat (`0x00` aside,
+  every value ~200-210 times over 45 KB); chi-square against uniform is 212 over
+  256 bins, squarely in the random range (compiled code scores in the tens of
+  thousands).
+- **Not compressed**: zlib, raw deflate, gzip, lzma and bz2 all reject the body,
+  so the high entropy is encryption, not a reversible packer.
+- **Every disassembler configuration fails**: imported into Ghidra as
+  `AARCH64:LE:64:v8A`, `ARM:LE:32:v7` and `ARM:LE:32:v8T` (Thumb), base 0 and
+  header-carved. AArch64 yields **0 functions**; ARM and Thumb yield 7-8 but all
+  are hallucinations placed on the exception vectors, full of `halt_baddata()`
+  and reads of uninitialized registers, no real code.
 
-So the TEE is genuinely opaque: it is decrypted at load time with a key derived
-from the SoC's efuses, held in hardware, never in the image. No tooling
-decompiles it without that key. The chain below is therefore documented from the
-decompiled preloader/LK plus the images' string tables (`extract/images/`).
+So the shipped TEE is ciphertext: it carries no decompilable code and is
+recovered only with the decryption key, which is not in the image (on MediaTek
+the TEE/ATF is decrypted at load from a SoC-fused key). This is the limit of what
+the OTA image yields, short of the hardware key. The chain below is therefore
+documented from the decompiled preloader/LK plus the images' string tables
+(`extract/images/`).
 
 ## Stage 1: preloader (MT65xx Preloader, MT8163)
 
