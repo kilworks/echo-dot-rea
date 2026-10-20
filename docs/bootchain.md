@@ -24,14 +24,26 @@ The base addresses come from the images themselves: LK's reset vector table sits
 at `0x41E00000`, the preloader's code (after the GFH header block, ending at file
 offset `0x300`) loads at `0x00200000`.
 
-`tz.code.bin` is different: it opens with an `EET KTM` (Trustonic Kinibi) monitor
-header, and its payload is a packed/encrypted TEE container, not plaintext code.
-A linear capstone sweep confirms this: disassembled as AArch64 it yields **zero**
-function prologues over 2.6 MB (and AArch64 decodes almost any byte pattern), and
-as ARM32 only six spurious ones. So the TEE is genuinely opaque without the
-decryption keys, which live in the secure world itself. The chain below is
-therefore documented from the decompiled preloader/LK plus the images' string
-tables (`extract/images/`).
+`tz.img` is different: it holds **two** MTK sub-images (each with the standard
+`0x58881688` header), an `ATF` partition at offset `0x0` (0xb400 bytes) and a
+`TEE` partition at `0xb600` (0x275800 bytes). After its MTK header, each sub-image
+is an `EET KTM ` container: a ~0x240-byte plaintext header (magic + body sizes
+`0xb1c0` / `0x2755c0`) followed by an **encrypted** body. The encryption is
+established three independent ways, not assumed:
+
+- **Entropy**: the payload runs at 7.9-8.0 bits/byte end to end (2 KB windows),
+  the signature of ciphertext or compressed data, where ARM/AArch64 code sits
+  around 5-6.
+- **Byte histogram** of the ATF body: flat (`0x00` aside, every value occurs
+  ~200-210 times over 45 KB), i.e. no opcode skew.
+- **Ghidra**: imported as `AARCH64:LE:64:v8A` (BinaryLoader), both the carved ATF
+  payload and the full `tz.code.bin` analyze to **0 functions** - no valid control
+  flow exists to recover.
+
+So the TEE is genuinely opaque: it is decrypted at load time with a key derived
+from the SoC's efuses, held in hardware, never in the image. No tooling
+decompiles it without that key. The chain below is therefore documented from the
+decompiled preloader/LK plus the images' string tables (`extract/images/`).
 
 ## Stage 1: preloader (MT65xx Preloader, MT8163)
 
