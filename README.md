@@ -39,7 +39,7 @@ See [`docs/findings.md`](docs/findings.md) for the full REA evidence.
 
 ## Full decompilation
 
-Every Echo-specific binary is decompiled to C pseudocode: 12 Fire OS binaries, 10,494 functions, 100%. The boot chain (`preloader`, `lk`, `tz`) is also loaded, but as raw MediaTek images it yields disassembly rather than pseudocode. Output in [`decomp/`](decomp), method and recovered architecture in [`docs/decompilation.md`](docs/decompilation.md).
+Every Echo-specific binary is decompiled to C pseudocode: 12 Fire OS binaries, 10,494 functions, 100%. The boot chain is decompiled too: `lk` (983 functions) and `preloader` (397) loaded as raw MediaTek ARM images at their correct base addresses; `tz` (TrustZone) is an encrypted Trustonic container and yields none. 14 binaries, 11,874 functions total. Output in [`decomp/`](decomp), method and recovered architecture in [`docs/decompilation.md`](docs/decompilation.md).
 
 The stack: `alexad`/`libalexad.so` own the cloud connection and auth; `libalexaservice.so`/`libalexamessageparsingutil.so` carry the on-device message bus over LIPC (Lab126 IPC) with shared-memory attachment queues; `libalexaspeechplayerimpl.so` drives speech synthesis and audio; `amzn_dha_*` provision device attestation (HMAC over the serial via Amazon Keymaster).
 

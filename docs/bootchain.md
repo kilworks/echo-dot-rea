@@ -8,11 +8,30 @@ SoC **MT8163**, vendor **Amazon Lab126**. The OTA `updater-script` flashes
 ## Decompilation note
 
 Unlike the Fire OS binaries, the boot images are not ELF files. `preloader.img`
-and `lk.bin` are raw MediaTek load images; Ghidra loaded them as flat blobs and
-recovered essentially no structured pseudocode (only thunks in `preloader.c` /
-`lk.c`). `tz.code.bin` disassembled to **zero** functions, an opaque TEE blob.
-So this chain is documented from the images' own string tables
-(`extract/images/`), which is where the real evidence is.
+and `lk.bin` are raw MediaTek load images: a GFH header (preloader) or a 0x200
+MTK image header (LK) followed by raw ARM code. Loaded into Ghidra as a flat
+`BinaryLoader` image with the explicit processor (`ARM:LE:32:v7`) and the correct
+base address, auto-analysis (which follows ARM/Thumb mode switches) recovers full
+pseudocode:
+
+| Image | Base | Functions | Output |
+|---|---|--:|---|
+| `preloader` | `0x00200000` | 397 | `decomp/preloader.c` |
+| `lk` | `0x41E00000` | 983 | `decomp/lk.c` |
+| `tz` | - | 0 | `decomp/tz.c` |
+
+The base addresses come from the images themselves: LK's reset vector table sits
+at `0x41E00000`, the preloader's code (after the GFH header block, ending at file
+offset `0x300`) loads at `0x00200000`.
+
+`tz.code.bin` is different: it opens with an `EET KTM` (Trustonic Kinibi) monitor
+header, and its payload is a packed/encrypted TEE container, not plaintext code.
+A linear capstone sweep confirms this: disassembled as AArch64 it yields **zero**
+function prologues over 2.6 MB (and AArch64 decodes almost any byte pattern), and
+as ARM32 only six spurious ones. So the TEE is genuinely opaque without the
+decryption keys, which live in the secure world itself. The chain below is
+therefore documented from the decompiled preloader/LK plus the images' string
+tables (`extract/images/`).
 
 ## Stage 1: preloader (MT65xx Preloader, MT8163)
 

@@ -6,7 +6,9 @@ Pseudocode output lives in [`decomp/`](../decomp), one `.c` per binary.
 
 ## Coverage
 
-12 binaries, 10,494 functions, 100% decompiled.
+12 Fire OS binaries, 10,494 functions, 100% decompiled. With the boot chain
+(LK + preloader) that is 14 binaries and 11,874 functions; the TEE (`tz`) is
+encrypted and yields none.
 
 | Binary | Arch | Functions | Pseudocode |
 |---|---|--:|---|
@@ -23,15 +25,16 @@ Pseudocode output lives in [`decomp/`](../decomp), one `.c` per binary.
 | `amzn_dha_hmac` | ARM64 | 24 | `decomp/amzn_dha_hmac.c` |
 | `libllog-android.so` | ARM32 | 17 | `decomp/libllog-android.so.c` |
 
-Boot chain, loaded as raw MediaTek images (not ELF), so Ghidra recovered
-disassembly/thunks rather than pseudocode. Documented from image strings in
+Boot chain, raw MediaTek images (not ELF). Loaded into Ghidra as flat
+`BinaryLoader` images with `-processor ARM:LE:32:v7` and the correct base
+address, so auto-analysis recovers pseudocode across ARM/Thumb. See
 [bootchain.md](bootchain.md).
 
-| Image | Arch | Recovered | Output |
+| Image | Arch | Functions | Output |
 |---|---|--:|---|
-| `preloader` | ARM32 | raw blob, thunks only | `decomp/preloader.c` |
-| `lk` | ARM32 | raw blob, thunks only | `decomp/lk.c` |
-| `tz` | ARM | 0 functions (opaque TEE) | `decomp/tz.c` |
+| `lk` | ARM32 (base `0x41E00000`) | 983 | `decomp/lk.c` |
+| `preloader` | ARM32 (base `0x00200000`) | 397 | `decomp/preloader.c` |
+| `tz` | opaque (Trustonic Kinibi, encrypted) | 0 | `decomp/tz.c` |
 
 Function names are `FUN_<addr>` where the binary is stripped; the logic, control flow, string references and library calls are recovered. Named symbols survive only for exported/imported functions.
 
